@@ -43,7 +43,8 @@ class _HomePage extends State<HomePage> {
         ],
       ),
       body: SfPdfViewer.network(
-        'https://cdn.syncfusion.com/content/PDFViewer/flutter-succinctly.pdf',
+        // 'https://cdn.syncfusion.com/content/PDFViewer/flutter-succinctly.pdf',
+        'https://dds.sciengine.com/cfs/files/pdfs/view/1674-7321/7DDBA8339BD3436082991C21EB352AE2.pdf',
         key: _pdfViewerKey,
       ),
     );
