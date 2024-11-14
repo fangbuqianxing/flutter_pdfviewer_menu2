@@ -32,6 +32,7 @@ import 'control/pdfviewer_callback_details.dart';
 import 'control/single_page_view.dart';
 import 'control/sticky_note_edit_text.dart';
 import 'control/text_selection_menu.dart';
+import 'control/text_selection_toolbar.dart';
 import 'form_fields/pdf_checkbox.dart';
 import 'form_fields/pdf_combo_box.dart';
 import 'form_fields/pdf_form_field.dart';
@@ -154,6 +155,7 @@ class SfPdfViewer extends StatefulWidget {
     this.enableDoubleTapZooming = true,
     this.enableTextSelection = true,
     this.onTextSelectionChanged,
+    this.onQuote,
     this.onHyperlinkClicked,
     this.onDocumentLoadFailed,
     this.onTap,
@@ -225,6 +227,7 @@ class SfPdfViewer extends StatefulWidget {
     this.enableDoubleTapZooming = true,
     this.enableTextSelection = true,
     this.onTextSelectionChanged,
+        this.onQuote,
     this.onHyperlinkClicked,
     this.onDocumentLoaded,
     this.onDocumentLoadFailed,
@@ -295,6 +298,7 @@ class SfPdfViewer extends StatefulWidget {
     this.enableDoubleTapZooming = true,
     this.enableTextSelection = true,
     this.onTextSelectionChanged,
+        this.onQuote,
     this.onHyperlinkClicked,
     this.onDocumentLoaded,
     this.onDocumentLoadFailed,
@@ -369,6 +373,7 @@ class SfPdfViewer extends StatefulWidget {
     this.enableDoubleTapZooming = true,
     this.enableTextSelection = true,
     this.onTextSelectionChanged,
+        this.onQuote,
     this.onHyperlinkClicked,
     this.onDocumentLoaded,
     this.onDocumentLoadFailed,
@@ -868,6 +873,9 @@ class SfPdfViewer extends StatefulWidget {
   /// }
   /// ```
   final PdfTextSelectionChangedCallback? onTextSelectionChanged;
+
+  /// Called when an item is quote
+  final void Function(String)? onQuote;
 
   ///Called when the hyperlink is tapped in [SfPdfViewer].
   ///
@@ -4369,7 +4377,7 @@ class SfPdfViewerState extends State<SfPdfViewer> with WidgetsBindingObserver {
         max(distanceFromBottom, distanceFromRight));
 
     if (largestDistance == distanceFromTop &&
-        ((kTextSelectionMenuHeight + kTextSelectionMenuMargin) /
+        ((myTextSelectionMenuHeight + kTextSelectionMenuMargin) /
                 _pdfViewerController.zoomLevel) <=
             distanceFromTop) {
       return TextSelectionMenuLocation.top;
@@ -4379,7 +4387,7 @@ class SfPdfViewerState extends State<SfPdfViewer> with WidgetsBindingObserver {
             distanceFromLeft) {
       return TextSelectionMenuLocation.left;
     } else if (largestDistance == distanceFromBottom &&
-        ((kTextSelectionMenuHeight + kTextSelectionMenuMargin) /
+        ((myTextSelectionMenuHeight + kTextSelectionMenuMargin) /
                 _pdfViewerController.zoomLevel) <=
             distanceFromBottom) {
       return TextSelectionMenuLocation.bottom;
@@ -4402,18 +4410,19 @@ class SfPdfViewerState extends State<SfPdfViewer> with WidgetsBindingObserver {
             _textSelectionRegion.left -
                 kTextSelectionMenuWidth -
                 kTextSelectionMenuMargin,
-            _textSelectionRegion.centerLeft.dy - kTextSelectionMenuHeight / 2);
+            _textSelectionRegion.centerLeft.dy - myTextSelectionMenuHeight / 2);
         break;
       case TextSelectionMenuLocation.right:
         localPosition = Offset(
             _textSelectionRegion.right + kTextSelectionMenuMargin,
-            _textSelectionRegion.centerRight.dy - kTextSelectionMenuHeight / 2);
+            _textSelectionRegion.centerRight.dy -
+                myTextSelectionMenuHeight / 2);
         break;
       case TextSelectionMenuLocation.top:
         localPosition = Offset(
             _textSelectionRegion.topCenter.dx - kTextSelectionMenuWidth / 2,
             _textSelectionRegion.top -
-                kTextSelectionMenuHeight -
+                myTextSelectionMenuHeight -
                 kTextSelectionMenuMargin);
         break;
       case TextSelectionMenuLocation.bottom:
@@ -4424,7 +4433,7 @@ class SfPdfViewerState extends State<SfPdfViewer> with WidgetsBindingObserver {
       case TextSelectionMenuLocation.center:
         localPosition = Offset(
             _textSelectionRegion.center.dx - kTextSelectionMenuWidth / 2,
-            _textSelectionRegion.center.dy - kTextSelectionMenuHeight / 2);
+            _textSelectionRegion.center.dy - myTextSelectionMenuHeight / 2);
         break;
     }
     if (localPosition != Offset.zero) {
@@ -4432,13 +4441,13 @@ class SfPdfViewerState extends State<SfPdfViewer> with WidgetsBindingObserver {
           _viewportGlobalRect!.top + kTextSelectionMenuMargin) {
         localPosition = Offset(localPosition.dx,
             _viewportGlobalRect!.top + kTextSelectionMenuMargin);
-      } else if (localPosition.dy + kTextSelectionMenuHeight >
+      } else if (localPosition.dy + myTextSelectionMenuHeight >
           _viewportGlobalRect!.bottom - kTextSelectionMenuMargin) {
         localPosition = Offset(
             localPosition.dx,
             _viewportGlobalRect!.bottom -
                 kTextSelectionMenuMargin -
-                kTextSelectionMenuHeight);
+                myTextSelectionMenuHeight);
       }
 
       if (localPosition.dx <
@@ -4459,12 +4468,47 @@ class SfPdfViewerState extends State<SfPdfViewer> with WidgetsBindingObserver {
     }
   }
 
+  final double myTextSelectionMenuHeight = 80.0;
+
   /// Inserts the text selection menu into the overlay.
   void _showTextSelectionMenu() {
     _hideTextSelectionMenu();
     _textSelectionOverlayEntry ??= OverlayEntry(
       maintainState: true,
       builder: (BuildContext context) {
+        return Positioned(
+          top: _contextMenuPosition.dy,
+          left: _contextMenuPosition.dx,
+          width: kTextSelectionMenuWidth,
+          height: myTextSelectionMenuHeight,
+          child: MyTextSelectionToolbar(
+            primaryAnchor: Offset.zero,
+            onCopy: () {
+              Clipboard.setData(
+                ClipboardData(
+                    text: _pdfPagesKey[_selectedTextPageNumber]
+                        ?.currentState
+                        ?.canvasRenderBox!
+                        .getSelectionDetails()
+                        .copiedText ??
+                        ''),
+              );
+              _pdfViewerController.clearSelection();
+            },
+            onQuote: () {
+              final String text = _pdfPagesKey[_selectedTextPageNumber]
+                  ?.currentState
+                  ?.canvasRenderBox!
+                  .getSelectionDetails()
+                  .copiedText ??
+                  '';
+              widget.onQuote?.call(text);
+              _pdfViewerController.clearSelection();
+              return;
+            },
+          ),
+        );
+
         return Positioned(
           top: _contextMenuPosition.dy,
           left: _contextMenuPosition.dx,
