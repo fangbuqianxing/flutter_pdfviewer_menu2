@@ -227,7 +227,7 @@ class SfPdfViewer extends StatefulWidget {
     this.enableDoubleTapZooming = true,
     this.enableTextSelection = true,
     this.onTextSelectionChanged,
-        this.onQuote,
+    this.onQuote,
     this.onHyperlinkClicked,
     this.onDocumentLoaded,
     this.onDocumentLoadFailed,
@@ -298,7 +298,7 @@ class SfPdfViewer extends StatefulWidget {
     this.enableDoubleTapZooming = true,
     this.enableTextSelection = true,
     this.onTextSelectionChanged,
-        this.onQuote,
+    this.onQuote,
     this.onHyperlinkClicked,
     this.onDocumentLoaded,
     this.onDocumentLoadFailed,
@@ -373,7 +373,7 @@ class SfPdfViewer extends StatefulWidget {
     this.enableDoubleTapZooming = true,
     this.enableTextSelection = true,
     this.onTextSelectionChanged,
-        this.onQuote,
+    this.onQuote,
     this.onHyperlinkClicked,
     this.onDocumentLoaded,
     this.onDocumentLoadFailed,
@@ -4487,25 +4487,27 @@ class SfPdfViewerState extends State<SfPdfViewer> with WidgetsBindingObserver {
               Clipboard.setData(
                 ClipboardData(
                     text: _pdfPagesKey[_selectedTextPageNumber]
-                        ?.currentState
-                        ?.canvasRenderBox!
-                        .getSelectionDetails()
-                        .copiedText ??
+                            ?.currentState
+                            ?.canvasRenderBox!
+                            .getSelectionDetails()
+                            .copiedText ??
                         ''),
               );
               _pdfViewerController.clearSelection();
             },
-            onQuote: () {
-              final String text = _pdfPagesKey[_selectedTextPageNumber]
-                  ?.currentState
-                  ?.canvasRenderBox!
-                  .getSelectionDetails()
-                  .copiedText ??
-                  '';
-              widget.onQuote?.call(text);
-              _pdfViewerController.clearSelection();
-              return;
-            },
+            onQuote: widget.onQuote == null
+                ? null
+                : () {
+                    final String text = _pdfPagesKey[_selectedTextPageNumber]
+                            ?.currentState
+                            ?.canvasRenderBox!
+                            .getSelectionDetails()
+                            .copiedText ??
+                        '';
+                    widget.onQuote?.call(text);
+                    _pdfViewerController.clearSelection();
+                    return;
+                  },
           ),
         );
 

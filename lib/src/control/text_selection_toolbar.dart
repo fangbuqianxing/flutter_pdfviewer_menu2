@@ -6,11 +6,11 @@ class MyTextSelectionToolbar extends StatelessWidget {
       {super.key,
       required this.primaryAnchor,
       required this.onCopy,
-      required this.onQuote});
+      this.onQuote});
 
   final Offset primaryAnchor;
   final VoidCallback onCopy;
-  final VoidCallback onQuote;
+  final VoidCallback? onQuote;
 
   @override
   Widget build(BuildContext context) {
@@ -20,10 +20,11 @@ class MyTextSelectionToolbar extends StatelessWidget {
         onPressed: onCopy,
         type: ContextMenuButtonType.copy,
       ),
-      ContextMenuButtonItem(
-        onPressed: onQuote,
-        label: 'Quote',
-      ),
+      if (onQuote != null)
+        ContextMenuButtonItem(
+          onPressed: onQuote,
+          label: 'Quote',
+        ),
     ]).toList();
 
     switch (Theme.of(context).platform) {
